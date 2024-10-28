@@ -1,5 +1,5 @@
 FrontEndCode/node_modules/
-FrontEndCode/.expo/
+.expo/
 FrontEndCode/dist/
 FrontEndCode/npm-debug.*
 FrontEndCode/*.jks
