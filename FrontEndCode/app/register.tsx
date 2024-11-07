@@ -1,84 +1,112 @@
-import { View, Text, TextInput, Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Dimensions, Alert } from 'react-native';
-import React, { useState } from 'react';
-import AppButton from '@/components/navigation/AppButton';
-import { Link, useRouter } from 'expo-router';
-import BackButton from '@/components/navigation/BackButton'; 
+import {
+  View,
+  Text,
+  TextInput,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Dimensions,
+  Alert,
+} from "react-native";
+import React, { useState } from "react";
+import AppButton from "@/components/navigation/AppButton";
+import { Link, useRouter } from "expo-router";
+import BackButton from "@/components/navigation/BackButton";
 
 const Register = () => {
   const router = useRouter();
-  const screenWidth = Dimensions.get('window').width;
+  const screenWidth = Dimensions.get("window").width;
 
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    username: '', 
-    email: '',
-    password: '',
-    passwordConfirm: '',
+    firstName: "",
+    lastName: "",
+    username: "",
+    email: "",
+    password: "",
+    passwordConfirm: "",
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [isButtonEnabled, setIsButtonEnabled] = useState(false);
 
   // Handle input changes and validate form fields
   const handleInputChange = (field: keyof typeof formData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    const allFilled = Object.values({ ...formData, [field]: value }).every((val) => val.trim() !== '');
+    const allFilled = Object.values({ ...formData, [field]: value }).every(
+      (val) => val.trim() !== ""
+    );
     setIsButtonEnabled(allFilled);
 
-    if (field === 'passwordConfirm' || field === 'password') {
-      setError(formData.password !== value && field === 'passwordConfirm' ? 'Passwords do not match.' : '');
+    if (field === "passwordConfirm" || field === "password") {
+      setError(
+        formData.password !== value && field === "passwordConfirm"
+          ? "Passwords do not match."
+          : ""
+      );
     }
   };
 
   // Register function
   const onRegister = async () => {
     if (!isButtonEnabled) {
-      Alert.alert("Incomplete Info", "Please fill in all the fields before creating an account.");
+      Alert.alert(
+        "Incomplete Info",
+        "Please fill in all the fields before creating an account."
+      );
       return;
     }
 
     if (formData.password !== formData.passwordConfirm) {
-      setError('Passwords do not match.');
+      setError("Passwords do not match.");
       return;
     }
 
     try {
       // Replace with your actual backend API call
-      const response = await fetch('https://your-backend-url/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          username: formData.username,
-          email: formData.email,
-          password: formData.password,
-        }),
-      });
+      const response = await fetch(
+        "https://bubblewomenserver-50023240811.development.catalystappsail.in/api/register",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            userName: formData.username,
+            // email: formData.email,
+            password: formData.password,
+          }),
+        }
+      );
 
       if (response.ok) {
         router.push("/login");
       } else {
-        Alert.alert("Registration Failed", "Please check your details and try again.");
+        Alert.alert(
+          "Registration Failed",
+          "Please check your details and try again."
+        );
       }
     } catch (err) {
-      Alert.alert("An error occurred", "Unable to complete registration. Please try again.");
+      Alert.alert(
+        "An error occurred",
+        "Unable to complete registration. Please try again."
+      );
     }
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
+    <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
         <View style={styles.wrapper}>
-          
           {/* Back Button */}
-          <View 
-            style={[ 
-              styles.backButtonWrapper, 
-              Platform.OS === 'web' ? { left: screenWidth * 0.5 - 200 } : {} 
+          <View
+            style={[
+              styles.backButtonWrapper,
+              Platform.OS === "web" ? { left: screenWidth * 0.5 - 200 } : {},
             ]}
           >
             <BackButton />
@@ -89,7 +117,7 @@ const Register = () => {
             <Text style={styles.title}>Create new account</Text>
 
             {/* Image */}
-            <Image 
+            <Image
               source={require("@/assets/images/register.png")}
               style={styles.image}
               resizeMode="contain"
@@ -101,14 +129,14 @@ const Register = () => {
               placeholder="First name"
               placeholderTextColor="#463f3a"
               value={formData.firstName}
-              onChangeText={(text) => handleInputChange('firstName', text)}
+              onChangeText={(text) => handleInputChange("firstName", text)}
             />
             <TextInput
               style={styles.input}
               placeholder="Last name"
               placeholderTextColor="#463f3a"
               value={formData.lastName}
-              onChangeText={(text) => handleInputChange('lastName', text)}
+              onChangeText={(text) => handleInputChange("lastName", text)}
             />
 
             {/* Username Input */}
@@ -117,7 +145,7 @@ const Register = () => {
               placeholder="Username"
               placeholderTextColor="#463f3a"
               value={formData.username}
-              onChangeText={(text) => handleInputChange('username', text)}
+              onChangeText={(text) => handleInputChange("username", text)}
             />
 
             {/* Other Input Fields */}
@@ -126,7 +154,7 @@ const Register = () => {
               placeholder="Email"
               placeholderTextColor="#463f3a"
               value={formData.email}
-              onChangeText={(text) => handleInputChange('email', text)}
+              onChangeText={(text) => handleInputChange("email", text)}
             />
             <TextInput
               style={styles.input}
@@ -134,7 +162,7 @@ const Register = () => {
               placeholderTextColor="#463f3a"
               secureTextEntry
               value={formData.password}
-              onChangeText={(text) => handleInputChange('password', text)}
+              onChangeText={(text) => handleInputChange("password", text)}
             />
             <TextInput
               style={styles.input}
@@ -142,7 +170,9 @@ const Register = () => {
               placeholderTextColor="#463f3a"
               secureTextEntry
               value={formData.passwordConfirm}
-              onChangeText={(text) => handleInputChange('passwordConfirm', text)}
+              onChangeText={(text) =>
+                handleInputChange("passwordConfirm", text)
+              }
             />
 
             {/* Error Message */}
@@ -157,8 +187,11 @@ const Register = () => {
 
             {/* Link to Login Page */}
             <Text style={styles.footerText}>
-              Already a Member? 
-              <Link style={styles.registerLink} href="/login"> Login</Link>
+              Already a Member?
+              <Link style={styles.registerLink} href="/login">
+                {" "}
+                Login
+              </Link>
             </Text>
           </View>
         </View>
@@ -174,13 +207,13 @@ const styles = StyleSheet.create({
   },
   wrapper: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 20,
-    position: 'relative',
+    position: "relative",
   },
   backButtonWrapper: {
-    position: 'absolute',
+    position: "absolute",
     top: 20,
     zIndex: 10,
     ...Platform.select({
@@ -190,19 +223,19 @@ const styles = StyleSheet.create({
     }),
   },
   image: {
-    width: '100%',
+    width: "100%",
     height: 180,
     marginBottom: 20,
   },
   formContainer: {
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     padding: 20,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#e5e5e5',
-    shadowColor: '#000',
+    borderColor: "#e5e5e5",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -211,14 +244,14 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    textAlign: 'center',
+    fontWeight: "bold",
+    textAlign: "center",
     paddingVertical: 10, // Reduced padding for title
     letterSpacing: 0.5,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#463f3a',
+    borderColor: "#463f3a",
     borderRadius: 7,
     paddingVertical: 14,
     paddingHorizontal: 24,
@@ -226,24 +259,24 @@ const styles = StyleSheet.create({
     marginBottom: 12, // Reduced margin for inputs
   },
   errorText: {
-    color: 'red',
+    color: "red",
     fontSize: 12,
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 10,
   },
   button: {
-    backgroundColor: '#463f3a',
+    backgroundColor: "#463f3a",
   },
   disabledButton: {
-    backgroundColor: '#d3d3d3', // Greyed out color when disabled
+    backgroundColor: "#d3d3d3", // Greyed out color when disabled
   },
   footerText: {
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 20,
   },
   registerLink: {
-    color: '#000000',
-    fontWeight: '600',
+    color: "#000000",
+    fontWeight: "600",
     letterSpacing: 0.5,
   },
 });

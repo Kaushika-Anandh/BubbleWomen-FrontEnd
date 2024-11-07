@@ -65,6 +65,7 @@ const Login = () => {
         const data = await response.json();
         const { token } = data; // Adjust this according to your response structure
         await AsyncStorage.setItem("jwtToken", token);
+
         router.push("/AppDashboard");
       } else {
         setError("Email/username or password does not match");
