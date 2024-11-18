@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import UserFeedbackCard from "./feedbackCard";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import BackButton from "@/components/navigation/BackButton";
 
 // Define Post type
 type Post = {
@@ -73,6 +74,9 @@ const App: React.FC = () => {
 
   return (
     <SafeAreaView style={styles.container}>
+      <View>
+        <BackButton/>
+      </View>
       <Text style={styles.header}>Blogs</Text>
       <FlatList
         data={posts}

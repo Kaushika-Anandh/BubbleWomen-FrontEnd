@@ -297,13 +297,7 @@ const SingleTapMapScreen = () => {
       >
         {marker && <Marker key={marker.id} coordinate={marker.coordinate} />}
       </MapView>
-      <View style={styles.tokenButton}>
-        <AppButton
-          onPress={sendPushTokenToBackend}
-          title={"SendToken"}
-          disabled={false}
-        ></AppButton>
-      </View>
+      
 
       {marker && (
         <View
@@ -316,8 +310,7 @@ const SingleTapMapScreen = () => {
             <Text
               style={styles.locationHeading}
               numberOfLines={1}
-              adjustsFontSizeToFit
-            >
+              adjustsFontSizeToFit>
               {locationName}
             </Text>
             <Text style={styles.ratingText}>
@@ -332,9 +325,8 @@ const SingleTapMapScreen = () => {
                 <Text style={styles.buttonText}>Write your own Rating</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.acceptButton}
-                onPress={() => router.navigate("/viewRatings")}
-              >
+                style={styles.declineButton}
+                onPress={() => router.navigate("/viewRatings")}>
                 <Text style={styles.buttonText}>View Ratings</Text>
               </TouchableOpacity>
             </View>
@@ -358,11 +350,6 @@ const styles = StyleSheet.create({
     position: "absolute",
     alignItems: "center",
     zIndex: 1,
-  },
-  tokenButton: {
-    position: "absolute",
-    width: 200,
-    paddingTop: 800,
   },
   popupCard: {
     width: 320,
