@@ -11,19 +11,19 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Rating from "@/components/Rating";
-import { useRouter } from "expo-router";
+import { useRouter, useGlobalSearchParams} from "expo-router";
 import DatePickerOverlay from "@/components/DatePickerOverlay";
-
 const { width } = Dimensions.get("window");
 
-const WritePost: React.FC = () => {
+const WritePost = () => {
   const router = useRouter();
+  const params = useGlobalSearchParams();
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [commentText, setCommentText] = useState("");
   const characterLimit = 2000;
   const [warning, setWarning] = useState("");
-
+  const {latitude, longitude } = params; // Retrieve the passed location
   const handleSaveDate = (date: Date) => {
     setSelectedDate(date);
     setShowDatePicker(false);
@@ -42,6 +42,11 @@ const WritePost: React.FC = () => {
     }
     setCommentText(text);
   };
+    
+  if (!latitude || !longitude) {
+    // Handle the case where currentLocation is not passed or unavailable      
+    return <Text>No location available</Text>;
+  }
 
   return (
     <View style={styles.container}>
@@ -70,6 +75,7 @@ const WritePost: React.FC = () => {
               <TouchableOpacity onPress={() => setShowDatePicker(true)}>
                 <Text style={styles.pickDateButton}>choose date & time</Text>
               </TouchableOpacity>
+              <Text>Latitude: {latitude}, Longitude: {longitude}</Text>
             </View>
           </View>
           <TextInput

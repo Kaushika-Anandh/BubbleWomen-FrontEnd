@@ -1,6 +1,3 @@
-// Need to change the placement of user token push
-// loads every time maps is moved
-
 import React, { useEffect, useRef, useState } from "react";
 import {
   View,
@@ -18,16 +15,29 @@ import MapView, {
 } from "react-native-maps";
 import { useRouter } from "expo-router";
 import * as Location from "expo-location";
-import { useNavigation } from "@react-navigation/native";
 import * as Notifications from "expo-notifications";
 import Constants from "expo-constants";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import base64 from "base-64";
-import AppButton from "@/components/navigation/AppButton";
 
+interface MarkerData{
+  id: string;
+  coordinate: {latitude: number; longitude: number};
+}
+
+interface overlayPosition{
+  x: number;
+  y: number;
+}
+
+interface LocationName{
+  name?: string;
+  city?: string;
+  street?: string;
+}
 const { width, height } = Dimensions.get("window");
 
-const SingleTapMapScreen = () => {
+const AppDashboard = () => {
   const router = useRouter();
   const [marker, setMarker] = useState<any | null>(null);
   const [currentLocation, setCurrentLocation] = useState<any>(null);
@@ -36,26 +46,50 @@ const SingleTapMapScreen = () => {
   const [locationName, setLocationName] = useState("Location Name");
   const [averageRating, setAverageRating] = useState(3.5); // Dummy rating value
   const mapRef = useRef<MapView | null>(null);
-  const navigation = useNavigation();
   const [expoPushToken, setExpoPushToken] = useState<string>("");
 
+  const handleNavigateToWritePost = () => {
+    if (currentLocation) {
+      router.push({
+        pathname: "/writePost",
+        params: { 
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude,
+        }, // Pass the location coordinates
+      });
+    }
+  };
+
+  // Initialize push notifications and location
   useEffect(() => {
-    console.log("one");
-    registerForPushNotificationsAsync().then((token) =>
-      setExpoPushToken(token ?? "")
-    );
+    console.log("token registraction for push notification.");
+
+    const initializePushTokenAndLocation = async() => {
+      const token = await registerForPushNotificationsAsync();
+      if(token){
+        setExpoPushToken(token ?? "");
+
+        //fetch location
+        const savedLocation = await getLocation();
+        if(savedLocation){
+          setCurrentLocation(savedLocation);
+          sendPushTokenToBackend(token, savedLocation); //single call with both values
+        }
+      }
+    };
+    initializePushTokenAndLocation();
   }, []);
 
-  const registerForPushNotificationsAsync = async () => {
+
+  const registerForPushNotificationsAsync = async (): Promise<string | undefined> => {
     let token;
     try {
       const { status } = await Notifications.getPermissionsAsync();
       if (status !== "granted") {
-        const { status: newStatus } =
-          await Notifications.requestPermissionsAsync();
+        const { status: newStatus } = await Notifications.requestPermissionsAsync();
         if (newStatus !== "granted") {
-          alert("Failed to get push token for push notification!");
-          return;
+          Alert.alert("Failed to get push token for push notification!");
+          return undefined;
         }
       }
 
@@ -64,27 +98,26 @@ const SingleTapMapScreen = () => {
         Constants?.expoConfig?.extra?.eas?.projectId ??
         Constants?.easConfig?.projectId;
       token = (
-        await Notifications.getExpoPushTokenAsync({
-          projectId: projectId,
-        })
+        await Notifications.getExpoPushTokenAsync({ projectId: projectId,})
       ).data;
       console.log("Expo push token:", token);
       return token;
     } catch (error) {
       console.error("Error getting push token:", error);
+      return undefined;
     }
   };
-  const getUsernameFromToken = async () => {
+
+
+  const getUsernameFromToken = async ():Promise<string | null> => {
     try {
       const token = await AsyncStorage.getItem("jwtToken");
       if (token) {
         // Split the JWT and decode the payload
         const payload = token.split(".")[1];
         const decodedPayload = JSON.parse(base64.decode(payload));
-        // Access the username (or whatever key represents the username)
-        const username = decodedPayload.sub;
-        // console.log(username);
-        return username;
+        // Access the username (or the key which represents the username)
+        return decodedPayload.sub;
       }
       return null; // Return null if token doesn't exist
     } catch (error) {
@@ -93,13 +126,20 @@ const SingleTapMapScreen = () => {
     }
   };
 
-  const sendPushTokenToBackend = async () => {
+  const sendPushTokenToBackend = async (expoPushToken: string, location: Location.LocationObjectCoords) => {
     try {
       const token = await AsyncStorage.getItem("jwtToken");
+      if(!token){
+        throw new Error("JWT token not found");
+      }
       console.log(`Bearer ${token}`);
 
       const userId = await getUsernameFromToken();
+      if (!userId) {
+        throw new Error("User ID not found");
+      }
       console.log(currentLocation.longitude);
+
       const response = await fetch(
         "https://bubblewomenserver-50023240811.development.catalystappsail.in/api/location/user/save",
         {
@@ -109,32 +149,36 @@ const SingleTapMapScreen = () => {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            longitude: currentLocation.longitude,
-            latitude: currentLocation.latitude,
+            longitude: location.longitude,
+            latitude: location.latitude,
             expoToken: expoPushToken,
-            userId: userId,
+            userId,
           }),
         }
       );
-      console.log(response);
+      if (response.ok) {
+        console.log("Push token updated successfully.");
+      } else {
+        console.error("Failed to update push token:", response.statusText);
+      }
     } catch (error) {
       console.error("Error sending push token to backend:", error);
     }
   };
 
   // Request location permission and get the current location
-  const getLocation = async () => {
+  const getLocation = async (): Promise<Location.LocationObjectCoords | null> => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== "granted") {
       setErrorMsg("Permission to access location was denied");
-      return;
+      return null;
     }
 
     const location = await Location.getCurrentPositionAsync({});
-    setCurrentLocation(location.coords);
+    return location.coords;
   };
 
-  const fetchAverageRating = async (coordinate: any) => {
+  const fetchAverageRating = async (coordinate: { latitude: number; longitude: number }) => {
     try {
       const response = await fetch(
         `https://bubblewomenserver-50023240811.development.catalystappsail.in/api/ratings/averageNearbyRating?longitude=${coordinate.longitude}&latitude=${coordinate.latitude}&maxDistanceKm=0.5`,
@@ -146,7 +190,7 @@ const SingleTapMapScreen = () => {
           },
         }
       );
-      // console.log(response.body);
+
       if (response.ok) {
         const data = await response.json();
         console.log(data);
@@ -320,7 +364,7 @@ const SingleTapMapScreen = () => {
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={styles.acceptButton}
-                onPress={() => router.navigate("/writePost")}
+                onPress={handleNavigateToWritePost}
               >
                 <Text style={styles.buttonText}>Write your own Rating</Text>
               </TouchableOpacity>
@@ -412,4 +456,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SingleTapMapScreen;
+export default AppDashboard;
